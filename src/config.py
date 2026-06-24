@@ -52,13 +52,25 @@ class Settings(BaseSettings):
             except Exception as e:
                 pass
         
-        # Robust default public STUN servers
+        # Robust default public STUN/TURN servers (includes Open Relay Project for NAT traversal)
         return [
             {"urls": ["stun:stun.l.google.com:19302"]},
             {"urls": ["stun:stun1.l.google.com:19302"]},
             {"urls": ["stun:stun2.l.google.com:19302"]},
             {"urls": ["stun:stun3.l.google.com:19302"]},
             {"urls": ["stun:stun4.l.google.com:19302"]},
+            {
+                "urls": [
+                    "turn:relay.metered.ca:80",
+                    "turn:relay.metered.ca:443",
+                    "turn:relay.metered.ca:443?transport=tcp"
+                ],
+                "username": "openrelayproject",
+                "credential": "openrelayproject"
+            },
+            {
+                "urls": ["stun:relay.metered.ca:80"]
+            }
         ]
 
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
