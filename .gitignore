@@ -1,0 +1,7 @@
+__pycache__/
+/Liveness_Project/data/
+/Liveness_Project/models/
+liveness_env/
+.venv/
+.env
+.env.example
