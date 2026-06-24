@@ -14,6 +14,7 @@ import plotly.graph_objects as go
 from src.face_module import FaceLivenessDetector
 from src.voice_module import VoiceLivenessDetector
 from src.fusion import fuse_scores
+from src.config import settings
 
 # --- Page Configuration ---
 st.set_page_config(
@@ -46,7 +47,7 @@ if 'voice_detector' not in st.session_state:
 
 # Configuration for WebRTC connecting (deals with STUN/TURN for permissions)
 RTC_CONFIGURATION = RTCConfiguration(
-    {"iceServers": [{"urls": ["stun:stun.l.google.com:19302"]}]}
+    {"iceServers": settings.ice_servers}
 )
 
 # --- Callback classes for stream processors ---
@@ -128,7 +129,9 @@ with col2:
     st.subheader("Verification Dashboard")
     gauge_placeholder = st.empty()
     
-    if st.button("🔍 Verify Liveness (Capture 3s)", use_container_width=True):
+    verify_btn = st.empty()
+    if verify_btn.button("🔍 Verify Liveness (Capture 3s)", use_container_width=True):
+        verify_btn.button("🔍 Verifying...", use_container_width=True, disabled=True, key="verify_btn_disabled")
         if not webrtc_ctx.state.playing:
             st.error("Please start the video/audio stream first.")
         else:

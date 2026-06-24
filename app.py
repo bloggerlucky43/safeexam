@@ -293,12 +293,16 @@ if role == "Student - Exam Portal":
         name_input = st.text_input("Full Name", placeholder="e.g. Alice Smith")
         matric_input = st.text_input("Matric Number", placeholder="e.g. SCI/2026/0042")
         
-        if st.button("Register & Start Exam", use_container_width=True):
+        register_btn = st.empty()
+        if register_btn.button("Register & Start Exam", use_container_width=True):
+            register_btn.button("Registering...", use_container_width=True, disabled=True, key="reg_btn_disabled")
             if name_input.strip() and matric_input.strip():
-                st.session_state["student_name"] = name_input.strip()
-                st.session_state["matric_number"] = matric_input.strip()
-                st.session_state["student_registered"] = True
-                st.rerun()
+                with st.spinner("Registering details..."):
+                    time.sleep(0.5)
+                    st.session_state["student_name"] = name_input.strip()
+                    st.session_state["matric_number"] = matric_input.strip()
+                    st.session_state["student_registered"] = True
+                    st.rerun()
             else:
                 st.error("Please enter a valid name and matric number.")
         st.stop()
@@ -330,7 +334,7 @@ if role == "Student - Exam Portal":
         webrtc_ctx = webrtc_streamer(
             key="liveness_exam_stream",
             mode=WebRtcMode.SENDRECV,
-            rtc_configuration=RTCConfiguration({"iceServers": [{"urls": ["stun:stun.l.google.com:19302"]}]}),
+            rtc_configuration=RTCConfiguration({"iceServers": settings.ice_servers}),
             video_processor_factory=lambda: VideoProcessor(student_id),
             audio_processor_factory=lambda: AudioProcessor(student_id),
             media_stream_constraints={"video": True, "audio": True},
@@ -351,7 +355,9 @@ if role == "Student - Exam Portal":
             for i, q in enumerate(questions_list):
                 responses[f"Question {i+1}"] = st.text_area(f"Question {i+1}: {q}", height=120, key=f"ans_input_{i}")
                 
-            if st.button("Submit Exam Data", use_container_width=True):
+            submit_btn = st.empty()
+            if submit_btn.button("Submit Exam Data", use_container_width=True):
+                submit_btn.button("Submitting Exam Data...", use_container_width=True, disabled=True, key="submit_btn_disabled")
                 video_proc = webrtc_ctx.video_processor
                 audio_proc = webrtc_ctx.audio_processor
                 
@@ -415,17 +421,20 @@ elif role == "Admin - Monitoring Dashboard":
     if not st.session_state["admin_authenticated"]:
         st.warning("🔒 Authenticated login required for authorized proctors.")
         pwd = st.text_input("Enter Admin Password", type="password")
-        if st.button("Authenticate Proctor"):
-            try:
-                auth_res = requests.post(f"{API_URL}/token", data={"username": "admin", "password": pwd})
-                if auth_res.status_code == 200:
-                    st.session_state["admin_authenticated"] = True
-                    st.session_state["access_token"] = auth_res.json()["access_token"]
-                    st.rerun()
-                else:
-                    st.error("Authentication failed. Incorrect password.")
-            except Exception as e:
-                st.error("Failed to establish link with backend authentication endpoint.")
+        auth_btn = st.empty()
+        if auth_btn.button("Authenticate Proctor"):
+            auth_btn.button("Authenticating...", disabled=True, key="auth_btn_disabled")
+            with st.spinner("Checking credentials..."):
+                try:
+                    auth_res = requests.post(f"{API_URL}/token", data={"username": "admin", "password": pwd})
+                    if auth_res.status_code == 200:
+                        st.session_state["admin_authenticated"] = True
+                        st.session_state["access_token"] = auth_res.json()["access_token"]
+                        st.rerun()
+                    else:
+                        st.error("Authentication failed. Incorrect password.")
+                except Exception as e:
+                    st.error("Failed to establish link with backend authentication endpoint.")
     else:
         # Logout button in sidebar
         if st.sidebar.button("Logout Admin Portal"):
@@ -609,15 +618,18 @@ elif role == "Admin - Monitoring Dashboard":
                     st.divider()
                     
                     # Save back to API
-                    if st.button("Save Exam Questions", use_container_width=True):
-                        # Use updated text inputs
-                        payload = {"questions": [q for q in updated_list if q.strip()]}
-                        save_res = requests.post(f"{API_URL}/exams/questions", headers=headers, json=payload)
-                        if save_res.status_code == 200:
-                            st.success("Questions updated successfully!")
-                            st.session_state["questions_list"] = payload["questions"]
-                        else:
-                            st.error(f"Failed to update questions: {save_res.text}")
+                    save_btn = st.empty()
+                    if save_btn.button("Save Exam Questions", use_container_width=True):
+                        save_btn.button("Saving Questions...", use_container_width=True, disabled=True, key="save_btn_disabled")
+                        with st.spinner("Saving questions to database..."):
+                            # Use updated text inputs
+                            payload = {"questions": [q for q in updated_list if q.strip()]}
+                            save_res = requests.post(f"{API_URL}/exams/questions", headers=headers, json=payload)
+                            if save_res.status_code == 200:
+                                st.success("Questions updated successfully!")
+                                st.session_state["questions_list"] = payload["questions"]
+                            else:
+                                st.error(f"Failed to update questions: {save_res.text}")
                 else:
                     st.error("Failed to load questions from backend API.")
             except Exception as e:

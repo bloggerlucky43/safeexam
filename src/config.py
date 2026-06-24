@@ -36,6 +36,31 @@ class Settings(BaseSettings):
     FACE_MODEL_PATH: str = "face_landmarker.task"
     VOICE_TARGET_SR: int = 16000
 
+    # WebRTC Settings
+    RTC_ICE_SERVERS: Optional[str] = None
+
+    @property
+    def ice_servers(self) -> list:
+        import json
+        if self.RTC_ICE_SERVERS:
+            try:
+                cleaned_servers = self.RTC_ICE_SERVERS.strip()
+                if (cleaned_servers.startswith("'") and cleaned_servers.endswith("'")) or \
+                   (cleaned_servers.startswith('"') and cleaned_servers.endswith('"')):
+                    cleaned_servers = cleaned_servers[1:-1]
+                return json.loads(cleaned_servers)
+            except Exception as e:
+                pass
+        
+        # Robust default public STUN servers
+        return [
+            {"urls": ["stun:stun.l.google.com:19302"]},
+            {"urls": ["stun:stun1.l.google.com:19302"]},
+            {"urls": ["stun:stun2.l.google.com:19302"]},
+            {"urls": ["stun:stun3.l.google.com:19302"]},
+            {"urls": ["stun:stun4.l.google.com:19302"]},
+        ]
+
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
 
 settings = Settings()
