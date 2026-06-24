@@ -7,6 +7,9 @@ RUN apt-get update && apt-get install -y \
     build-essential \
     libgl1 \
     libglib2.0-0 \
+    libgles2 \
+    libegl1 \
+    libgomp1 \
     && rm -rf /var/lib/apt/lists/*
 
 COPY requirements.txt .
@@ -22,6 +25,9 @@ RUN apt-get update && apt-get install -y \
     libgl1 \
     libglib2.0-0 \
     libsndfile1 \
+    libgles2 \
+    libegl1 \
+    libgomp1 \
     && rm -rf /var/lib/apt/lists/*
 
 COPY --from=builder /root/.local /root/.local

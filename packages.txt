@@ -1,0 +1,6 @@
+libgl1
+libglib2.0-0
+libsndfile1
+libgles2
+libegl1
+libgomp1
