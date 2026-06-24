@@ -56,7 +56,20 @@ voice_detector = VoiceLivenessDetector()
 @app.on_event("startup")
 def on_startup():
     init_db()
-    log.info("API Startup Complete", database_url=settings.DATABASE_URL)
+    
+    # Analyze loaded admin password for diagnostic purposes without printing the secret
+    raw_pwd = settings.ADMIN_PASSWORD or ""
+    clean_pwd = settings.cleaned_admin_password
+    has_quotes = raw_pwd.startswith(('"', "'")) and raw_pwd.endswith(('"', "'"))
+    has_whitespace = len(raw_pwd) != len(raw_pwd.strip())
+    is_default = (clean_pwd == "admin123")
+    
+    log.info("API Startup Complete", 
+             database_url=settings.DATABASE_URL,
+             admin_pwd_length=len(raw_pwd),
+             admin_pwd_is_default=is_default,
+             admin_pwd_has_quotes=has_quotes,
+             admin_pwd_has_whitespace=has_whitespace)
 
 # --- AUTH UTILS ---
 def create_access_token(data: dict):
@@ -86,7 +99,11 @@ class VerificationResponse(BaseModel):
 @app.post("/token")
 @limiter.limit("5/minute")
 async def login(request: Request, form_data: OAuth2PasswordRequestForm = Depends()):
-    if form_data.username == "admin" and form_data.password == settings.ADMIN_PASSWORD:
+    # Sanitize inputs and settings (strip trailing/leading whitespace and quotes)
+    configured_password = settings.cleaned_admin_password
+    input_password = form_data.password.strip().strip("'").strip('"') if form_data.password else ""
+    
+    if form_data.username == "admin" and input_password == configured_password:
         access_token = create_access_token(data={"sub": form_data.username})
         return {"access_token": access_token, "token_type": "bearer"}
     raise HTTPException(status_code=400, detail="Incorrect username or password")

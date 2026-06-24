@@ -10,6 +10,10 @@ class Settings(BaseSettings):
     ADMIN_PASSWORD: str = "admin123"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
 
+    @property
+    def cleaned_admin_password(self) -> str:
+        return self.ADMIN_PASSWORD.strip().strip("'").strip('"') if self.ADMIN_PASSWORD else ""
+
     # API Settings
     HOST: str = "0.0.0.0"
     PORT: int = 8000

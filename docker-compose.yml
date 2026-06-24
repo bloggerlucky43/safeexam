@@ -6,9 +6,10 @@ services:
     command: uvicorn main:app --host 0.0.0.0 --port 8000
     volumes:
       - ./data:/app/data
-      - ./.env:/app/.env
     ports:
       - "8000:8000"
+    env_file:
+      - .env
     environment:
       - DATABASE_URL=sqlite:///./data/liveness_records.db
 
@@ -17,11 +18,12 @@ services:
     command: streamlit run app.py --server.port 8501 --server.address 0.0.0.0
     volumes:
       - ./data:/app/data
-      - ./.env:/app/.env
     ports:
       - "8501:8501"
     depends_on:
       - api
+    env_file:
+      - .env
     environment:
       - API_URL=http://api:8000
 
